@@ -1,15 +1,19 @@
 package brinkstest.com.pruebalista.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.ImageView;
+import android.widget.RemoteViews;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import brinkstest.com.pruebalista.R;
@@ -22,11 +26,14 @@ import brinkstest.com.pruebalista.models.Aplicacion;
 
 public class AplicacionesArrayAdapter extends ArrayAdapter<Aplicacion> {
 
-    List<Aplicacion> aplicaciones = null;
+    List<Aplicacion> aplicaciones = new ArrayList<>();
+    List<Aplicacion> TodasAplicaciones = new ArrayList<>();
 
     public AplicacionesArrayAdapter(Context context, int textViewResourceId, List<Aplicacion> objects) {
         super(context, textViewResourceId, objects);
+        TodasAplicaciones = new ArrayList<>();
         aplicaciones = objects;
+        TodasAplicaciones.addAll(objects);
     }
 
     @Override
@@ -38,13 +45,17 @@ public class AplicacionesArrayAdapter extends ArrayAdapter<Aplicacion> {
     public View getView(int position, View convertView, ViewGroup parent) {
 
         View v = convertView;
-        LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        v = inflater.inflate(R.layout.adapter_listitemaplicaciones, null);
-        TextView textView = (TextView) v.findViewById(R.id.textView);
-        ImageView imageView = (ImageView) v.findViewById(R.id.imageView);
-        textView.setText(aplicaciones.get(position).getName().getLabel());
-        new DownloadImageTask(imageView)
-                .execute(aplicaciones.get(position).getImages().get(2).getLabel());
+        if(position<aplicaciones.size()) {
+            LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            v = inflater.inflate(R.layout.adapter_listitemaplicaciones, null);
+            TextView textView = (TextView) v.findViewById(R.id.textView);
+            ImageView imageView = (ImageView) v.findViewById(R.id.imageView);
+            Log.i("CRICUC", String.valueOf(aplicaciones.size()) + " -|- " + String.valueOf(position));
+            textView.setText(aplicaciones.get(position).getName().getLabel());
+            new DownloadImageTask(imageView)
+                    .execute(aplicaciones.get(position).getImages().get(2).getLabel());
+        }
+
         return v;
 
     }
@@ -55,21 +66,22 @@ public class AplicacionesArrayAdapter extends ArrayAdapter<Aplicacion> {
         Filter myFilter = new Filter() {
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
+                String cadena = String.valueOf(constraint).toUpperCase();
                 FilterResults filterResults = new FilterResults();
                 ArrayList<Aplicacion> tempList=new ArrayList<Aplicacion>();
                 //constraint is the result from text you want to filter against.
                 //objects is your data set you will filter from
-                if(constraint != null && aplicaciones!=null) {
+                aplicaciones.clear();
+                aplicaciones.addAll(TodasAplicaciones);
+                if(cadena != null && aplicaciones!=null) {
+                    Log.i("FILTRO", cadena + " -|- " + String.valueOf(aplicaciones.size())+ " -|- " + String.valueOf(TodasAplicaciones.size()));
                     int length=aplicaciones.size();
-                    int i=0;
-                    while(i<length){
-                        Aplicacion item=aplicaciones.get(i);
-                        //do whatever you wanna do here
-                        //adding result set output array
-
-                        tempList.add(item);
-
-                        i++;
+                    for (Iterator<Aplicacion> i = aplicaciones.iterator(); i.hasNext();) {
+                        Aplicacion item = i.next();
+                        Log.i("ITERADOR", item.getName().getLabel() + " -|- " + item.getName().getLabel().toUpperCase().contains(cadena));
+                        if(item.getName().getLabel().toUpperCase().contains(cadena)) {
+                            tempList.add(item);
+                        }
                     }
                     //following two lines is very important
                     //as publish result can only take FilterResults objects
@@ -82,7 +94,20 @@ public class AplicacionesArrayAdapter extends ArrayAdapter<Aplicacion> {
             @SuppressWarnings("unchecked")
             @Override
             protected void publishResults(CharSequence contraint, FilterResults results) {
-                aplicaciones = (ArrayList<Aplicacion>) results.values;
+
+                List<Aplicacion> filtrado = (ArrayList<Aplicacion>) results.values;
+                List<Aplicacion> borrar = new ArrayList<Aplicacion>();
+
+                for (Iterator<Aplicacion> i = aplicaciones.iterator(); i.hasNext();) {
+                    Aplicacion item = i.next();
+                    if(!filtrado.contains(item)){
+                        borrar.add(item);
+                    }
+                }
+
+                aplicaciones.removeAll(borrar);
+
+                Log.i("Flag",String.valueOf(aplicaciones.size()));
                 if (results.count > 0) {
                     notifyDataSetChanged();
                 } else {

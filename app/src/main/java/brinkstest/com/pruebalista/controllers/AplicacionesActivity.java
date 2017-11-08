@@ -40,7 +40,8 @@ public class AplicacionesActivity extends AppCompatActivity {
     Context context = this;
     WSAplicaciones wsaplicaciones;
     List<String> glCategorias = new ArrayList<String>();
-    List<Aplicacion> glApliaciones = new ArrayList<Aplicacion>();
+    List<Aplicacion> glTodasApliaciones = new ArrayList<Aplicacion>();
+    List<Aplicacion> glAplicacionesFiltradas = new ArrayList<Aplicacion>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,14 +105,11 @@ public class AplicacionesActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence cs, int arg1, int arg2, int arg3) {
                 // When user changed the Text
+                glAplicacionesFiltradas = new ArrayList<Aplicacion>();
+                glAplicacionesFiltradas.addAll(glTodasApliaciones);
+                Log.i("Entrooo", String.valueOf(glAplicacionesFiltradas.size()));
+                ((AplicacionesArrayAdapter)((ListView)findViewById(R.id.lvAplicaciones)).getAdapter()).getFilter().filter(cs);
 
-                AplicacionesArrayAdapter adapterAplicaciones = new AplicacionesArrayAdapter(context,
-                        android.R.layout.simple_list_item_1, glApliaciones);
-
-                ((ListView)findViewById(R.id.lvAplicaciones)).setAdapter(adapterAplicaciones);
-
-                ((ListView)findViewById(R.id.lvAplicaciones)).deferNotifyDataSetChanged();
-                adapterAplicaciones.getFilter().filter(cs);
             }
 
             @Override
@@ -154,15 +152,16 @@ public class AplicacionesActivity extends AppCompatActivity {
                     @Override
                     public void onNext(List<Aplicacion> aplicaciones) {
 
-                        glApliaciones = aplicaciones;
+                        glTodasApliaciones = aplicaciones;
+                        glAplicacionesFiltradas.addAll(aplicaciones);
 
                         ArrayAdapter adapterCategorias = new ArrayAdapter(context,
-                                android.R.layout.simple_list_item_1, ExtraerCategorias(glApliaciones));
+                                android.R.layout.simple_list_item_1, ExtraerCategorias(glTodasApliaciones));
 
                         ((ListView)findViewById(R.id.lvCategorias)).setAdapter(adapterCategorias);
 
                         AplicacionesArrayAdapter adapterAplicaciones = new AplicacionesArrayAdapter(context,
-                                android.R.layout.simple_list_item_1, glApliaciones);
+                                android.R.layout.simple_list_item_1, glAplicacionesFiltradas);
 
                         ((ListView)findViewById(R.id.lvAplicaciones)).setAdapter(adapterAplicaciones);
 
@@ -191,43 +190,45 @@ public class AplicacionesActivity extends AppCompatActivity {
         ArrayAdapter adapterCategorias = new ArrayAdapter(context,
                 android.R.layout.simple_list_item_1, glCategorias);
 
+        Log.i("OrdenarPorNombre", String.valueOf(glAplicacionesFiltradas.size()));
+
         ((ListView)findViewById(R.id.lvCategorias)).setAdapter(adapterCategorias);
 
         ((ListView)findViewById(R.id.lvCategorias)).deferNotifyDataSetChanged();
 
-        Collections.sort(glApliaciones,new Comparator<Aplicacion>(){
+        Collections.sort(glAplicacionesFiltradas,new Comparator<Aplicacion>(){
             public int compare(Aplicacion o1, Aplicacion o2){
-                if(o1.getName().getLabel() == o2.getName().getLabel())
-                    return 0;
-                return o1.getName().getLabel().compareTo(o2.getName().getLabel());
+                return o1.getName().getLabel().toUpperCase().compareTo(o2.getName().getLabel().toUpperCase());
             }
         });
 
         AplicacionesArrayAdapter adapterAplicaciones = new AplicacionesArrayAdapter(context,
-                android.R.layout.simple_list_item_1, glApliaciones);
+                android.R.layout.simple_list_item_1, glAplicacionesFiltradas);
 
         ((ListView)findViewById(R.id.lvAplicaciones)).setAdapter(adapterAplicaciones);
 
         ((ListView)findViewById(R.id.lvAplicaciones)).deferNotifyDataSetChanged();
+
+        ((EditText)findViewById(R.id.inputSearch)).setText(((EditText)findViewById(R.id.inputSearch)).getText());
 
     }
 
     public void OrdenarPorFecha(){
 
-        Collections.sort(glApliaciones,new Comparator<Aplicacion>(){
+        Collections.sort(glAplicacionesFiltradas,new Comparator<Aplicacion>(){
             public int compare(Aplicacion o1, Aplicacion o2){
-                if(o1.getReleaseDate().getFechaConvertida() == o2.getReleaseDate().getFechaConvertida())
-                    return 0;
-                return o1.getReleaseDate().getFechaConvertida().compareTo(o2.getReleaseDate().getFechaConvertida());
+                return o2.getReleaseDate().getLabel().compareTo(o1.getReleaseDate().getLabel());
             }
         });
 
         AplicacionesArrayAdapter adapterAplicaciones = new AplicacionesArrayAdapter(context,
-                android.R.layout.simple_list_item_1, glApliaciones);
+                android.R.layout.simple_list_item_1, glAplicacionesFiltradas);
 
         ((ListView)findViewById(R.id.lvAplicaciones)).setAdapter(adapterAplicaciones);
 
         ((ListView)findViewById(R.id.lvAplicaciones)).deferNotifyDataSetChanged();
+
+        ((EditText)findViewById(R.id.inputSearch)).setText(((EditText)findViewById(R.id.inputSearch)).getText());
 
     }
 
